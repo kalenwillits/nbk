@@ -133,3 +133,6 @@ dmypy.json
 
 # leviathan
 leviathan/
+
+data/
+archive/
