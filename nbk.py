@@ -82,7 +82,7 @@ def handle_create():
 
 def handle_update(query: str):
     query_df = handle_query(query)
-    assert query_df.shape[0] == 1, f'Unable to update, query produced {query_df.shape[0]] results}'
+    assert query_df.shape[0] == 1, f'Unable to update, query produced {query_df.shape[0]} results'
     updated_note = write_note(note=query_df.iloc[0].note)
     df = db.update('Note', query_df, note=updated_note, timestamp=datetime.now().timestamp())
     print(df.to_string())
