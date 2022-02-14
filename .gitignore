@@ -136,3 +136,5 @@ leviathan/
 
 data/
 archive/
+build/
+dist/
