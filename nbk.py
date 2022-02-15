@@ -1,13 +1,16 @@
 from datetime import datetime
+import tabulate
 import os
 import argparse
 import IPython
 
 from leviathan import Model, ModelManager, Database
 from leviathan.utils import is_numeric
+from cmr import render
 
-TEMP_FILE = '.nbk.tmp'
+TEMP_FILE = '.nbk.md'
 EDITOR = 'vim'
+DATA_PATH = '/home/kalenwillits/nbk/data/'
 
 parser = argparse.ArgumentParser(description='TODO - Write description')
 parser.add_argument('-q', '--query', type=str, default='', help='TODO')
@@ -50,15 +53,18 @@ class Note(Model):
         return datetime.fromtimestamp(self.timestamp).hour
 
 
-
 models = ModelManager(Note)
-db = Database(models=models)
+db = Database(models=models, path=DATA_PATH)
+db.load()
 db.migrate()
+
 
 def output(df):
     df.timestamp = df.timestamp.apply(lambda timestamp: str(datetime.fromtimestamp(timestamp).date()))
     df = df.set_index('page')
-    print(df[['title', 'timestamp']].to_string())
+    print(render(df[['title', 'timestamp']].to_markdown()))
+    if df.shape[0] == 1:
+        print(render(df.note.iloc[0]))
 
 
 def write_note(note=''):
