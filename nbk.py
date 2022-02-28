@@ -1,19 +1,22 @@
 from datetime import datetime
-import tabulate
 import os
 import argparse
 import IPython
+from uuid import uuid4
 
 from leviathan import Model, ModelManager, Database
 from leviathan.utils import is_numeric
+
+import tabulate   # imported only to be included when compiled.
 from cmr import render
 
-TEMP_FILE = '.nbk.md'
 EDITOR = 'vim'
 DATA_PATH = '/home/kalenwillits/nbk/data/'
 
 parser = argparse.ArgumentParser(description='TODO - Write description')
-parser.add_argument('-q', '--query', type=str, default='', help='TODO')
+
+#  nargs='?': Allows the positional argument to be optional.
+parser.add_argument('query', type=str, default='', nargs='?', help='TODO')
 parser.add_argument('-c', '--create', action='store_true', default=False, help='TODO')
 parser.add_argument('-u', '--update', action='store_true', default=False, help='TODO')
 parser.add_argument('-d', '--drop', action='store_true', default=False, help='TODO')
@@ -26,7 +29,6 @@ class Note(Model):
     note: str
     timestamp: float
     page: int
-
 
     @property
     def title(self) -> str:
@@ -59,6 +61,10 @@ db.load()
 db.migrate()
 
 
+def build_temp_file():
+    return f'.nbk-{uuid4()}.md'
+
+
 def output(df):
     df.timestamp = df.timestamp.apply(lambda timestamp: str(datetime.fromtimestamp(timestamp).date()))
     df = df.set_index('page')
@@ -68,14 +74,14 @@ def output(df):
 
 
 def write_note(note=''):
-    with open(TEMP_FILE, 'w+') as file:
+    temp_file = build_temp_file()
+    with open(temp_file, 'w+') as file:
         file.write(note)
-    os.system(f'{EDITOR} {TEMP_FILE}')
-    with open(TEMP_FILE, 'r+') as file:
+    os.system(f'{EDITOR} {temp_file}')
+    with open(temp_file, 'r+') as file:
         note = file.read()
-    os.system(f'rm {TEMP_FILE}')
+    os.system(f'rm {temp_file}')
     return note
-
 
 
 def handle_query(query: str):
@@ -90,7 +96,6 @@ def handle_query(query: str):
                 else:
                     kwargs[kwarg[0]] = kwarg[1]
     df = db.query('Note', **kwargs)
-    output(df)
     return df
 
 
@@ -100,7 +105,7 @@ def handle_create():
     timestamp = datetime.now().timestamp()
     df = db.create('Note', note=new_note, timestamp=timestamp, page=page)._to_df()
     db.save()
-    output(df)
+    return df
 
 
 def handle_update(query: str):
@@ -109,13 +114,14 @@ def handle_update(query: str):
     updated_note = write_note(note=query_df.iloc[0].note)
     df = db.update('Note', query_df, note=updated_note, timestamp=datetime.now().timestamp())
     db.save()
-    output(df)
+    return df
 
 
 def handle_drop(query: str):
-    query_df = handle_query(query)
-    db.drop('Note', query_df)
+    df = handle_query(query)
+    db.drop('Note', df)
     db.save()
+
 
 def handle_shell():
     IPython.embed()
@@ -125,13 +131,13 @@ def main():
     if args.shell:
         handle_shell()
     elif args.create:
-        handle_create()
+        output(handle_create())
     elif args.update:
-        handle_update(args.query)
+        output(handle_update(args.query))
     elif args.drop:
         handle_drop(args.query)
     else:
-        handle_query(args.query)
+        output(handle_query(args.query))
 
 
 if __name__ == '__main__':
