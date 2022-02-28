@@ -7,8 +7,13 @@ from uuid import uuid4
 from leviathan import Model, ModelManager, Database
 from leviathan.utils import is_numeric
 
+
+from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 from cmr import render
+
+# TODO - Reset title on update
+# TODO - migrate page number at some point
 
 EDITOR = 'vim'
 DATA_PATH = '/home/kalenwillits/nbk/data/'
@@ -20,6 +25,7 @@ parser.add_argument('query', type=str, default='', nargs='?', help='TODO')
 parser.add_argument('-c', '--create', action='store_true', default=False, help='TODO')
 parser.add_argument('-u', '--update', action='store_true', default=False, help='TODO')
 parser.add_argument('-d', '--drop', action='store_true', default=False, help='TODO')
+parser.add_argument('-s', '--snippet', default='', help='TODO')
 parser.add_argument('--shell', action='store_true', default=False, help='TODO')
 
 args = parser.parse_args()
@@ -71,6 +77,13 @@ def output(df):
     print(render(df[['title', 'timestamp']].to_markdown()))
     if df.shape[0] == 1:
         print(render(df.note.iloc[0]))
+
+
+def handle_snippet(query: str, format_value: str):
+    query_df = handle_query(query)
+    format_value_list = format_value.split('&')
+    assert query_df.shape[0] == 1, f'Unable to get snippet, query produced {query_df.shape[0]} results'
+    copy('\n'.join(query_df.iloc[0].note.split('\n')[1:]).format(*format_value_list))
 
 
 def write_note(note=''):
@@ -130,6 +143,8 @@ def handle_shell():
 def main():
     if args.shell:
         handle_shell()
+    elif args.snippet:
+        handle_snippet(args.query, args.snippet)
     elif args.create:
         output(handle_create())
     elif args.update:
