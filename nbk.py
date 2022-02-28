@@ -151,6 +151,8 @@ def main():
         output(handle_update(args.query))
     elif args.drop:
         handle_drop(args.query)
+    elif is_numeric(args.query):
+        output(handle_query(f'?page={args.query}'))
     else:
         output(handle_query(args.query))
 
