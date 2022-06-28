@@ -138,3 +138,6 @@ data/
 archive/
 build/
 dist/
+
+# venv
+.nbk
