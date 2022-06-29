@@ -4,8 +4,8 @@ import argparse
 import IPython
 from uuid import uuid4
 
-from leviathan import Model, ModelManager, Database
-from leviathan.utils import is_numeric
+from pandas_db import Model, ModelManager, Database
+from pandas_db.utils import is_numeric
 
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
