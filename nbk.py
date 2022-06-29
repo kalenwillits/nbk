@@ -41,7 +41,12 @@ Multiple lookups are supported and can be seperated by <?> or <&>.
 example: ?title__f=test&month__gte=8
 The default view will only show notes from today.
     ''')
-parser.add_argument('-c', '--create', action='store_true', default=False, help='Create: This will open the editor.')
+parser.add_argument('-a', '--all', action='store_true', default=False, help='''
+All: Defaults the query to all notes and prints the set. Skips all other operations.
+    ''')
+parser.add_argument('-c', '--create', action='store_true', default=False, help='''
+Create: This will open the editor.
+    ''')
 parser.add_argument('-u', '--update', action='store_true', default=False, help='''
 Update: Executes the query and if the result is a single note, open it in the editor.
     ''')
@@ -214,6 +219,10 @@ def handle_shell():
     IPython.embed()
 
 
+def handle_all():
+    output(db.Note)
+
+
 def main():
     if args.shell:
         handle_shell()
@@ -221,6 +230,8 @@ def main():
         handle_snippet(args.query, args.snippet)
     elif args.execute:
         handle_execute(args.query, args.execute)
+    elif args.all:
+        handle_all()
     elif args.create:
         handle_create()
     elif args.update:
