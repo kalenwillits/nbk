@@ -54,12 +54,12 @@ parser.add_argument('-d', '--drop', action='store_true', default=False, help='''
 Drop: Executes the query, asks for confirmation, then removes all queried pages.
     ''')
 parser.add_argument('-s', '--snippet', help='''
-Snippit: Executes the query and looks for a single note with a code snippit containig code wrapped in <```>.
+Snippit: Executes the query and looks for a single note with a code snippet containig code wrapped in <```>.
 Then takes arguments seperated by <;>. Those arguments are formatted into the snippet at curly braces with an index.
 <{i}> The formatted code is then copied to the clipboard.
     ''')
 parser.add_argument('-e', '--execute', help='''
-Execute: same as snippit but will execute the code as a bash script instead of copying it to the clipboard.
+Execute: same as snippet but will execute the code as a bash script instead of copying it to the clipboard.
     ''')
 parser.add_argument('--shell', action='store_true', default=False, help='''
 Shell: Open an iPython shell where the database can be accessed through the global variable <db>.
@@ -120,22 +120,22 @@ def output(df):
         print(df.note.iloc[0])
 
 
-def get_snippit(query: str, format_value: str) -> str:
+def get_snippet(query: str, format_value: str) -> str:
     query_df = handle_query(query)
     format_value_list = format_value.split(';')
     assert query_df.shape[0] == 1, f'Unable to get snippet, query produced {query_df.shape[0]} results'
     if format_value is not None:
-        assert len(snippit := query_df.iloc[0].note.split('```')) > 1, 'This note does not have a valid snippit.'
-        snippit = snippit[1]
-        return snippit.format(*format_value_list)
+        assert len(snippet := query_df.iloc[0].note.split('```')) > 1, 'This note does not have a valid snippet.'
+        snippet = snippet[1]
+        return snippet.format(*format_value_list)
 
 
 def handle_snippet(query: str, format_value: str):
-    copy(get_snippit(query, format_value))
+    copy(get_snippet(query, format_value))
 
 
 def handle_execute(query: str, format_value: str):
-    os.system(get_snippit(query, format_value))
+    os.system(get_snippet(query, format_value))
 
 
 def write_note(note=''):
