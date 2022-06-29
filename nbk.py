@@ -11,7 +11,8 @@ from pandas_db.utils import is_numeric
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
-CONFIG_FILE = 'config.json'
+USER = os.getlogin()
+CONFIG_FILE = f'/home/{USER}/nbk/config.json'
 DEFAULT_CONFIG = {'EDITOR': 'vim'}
 
 global config
@@ -24,7 +25,7 @@ with open(CONFIG_FILE) as json_config_file:
     config = json.loads(json_config_file.read())
 
 if config.get('DATA_PATH') is None:
-    config['DATA_PATH'] = os.path.join('home', os.getlogin(), 'nbk', 'data')
+    config['DATA_PATH'] = f'/home/{USER}/nbk/data/'
 
 TODAY = datetime.now()
 

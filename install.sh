@@ -2,7 +2,7 @@ mkdir -p ~/nbk/;
 mkdir -p ~/nbk/data/;
 cp dist/nbk ~/nbk/nbk;
 
-installContent="\n#nbk\nexport PATH=\$PATH:~/nbk/";
+installContent="export PATH=\$PATH:~/nbk/";
 
 if grep -Fxq "$installContent" ~/.bashrc
 then
