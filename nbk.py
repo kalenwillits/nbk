@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import os
 import argparse
 import IPython
+import json
 from uuid import uuid4
 
 from pandas_db import Model, ModelManager, Database
@@ -10,13 +11,17 @@ from pandas_db.utils import is_numeric
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
-# TODO - Add -e --execute to execute note as a bash script. This will allow workflow automations
-EDITOR = 'vim'
-# DATA_PATH = os.path.join('home', os.getlogin(), 'nbk', 'data')
-DATA_PATH = 'data/'
+global config
+
+with open('config.json') as json_config_file:
+    config = json.loads(json_config_file.read())
+
+if config.get('DATA_PATH') is None:
+    config['DATA_PATH'] = os.path.join('home', os.getlogin(), 'nbk', 'data')
+
 TODAY = datetime.now()
 
-parser = argparse.ArgumentParser(description='TODO - Write description')
+parser = argparse.ArgumentParser(description='Simple terminal notes organizer and utility system.')
 
 #  nargs='?': Allows the positional argument to be optional.
 parser.add_argument('query', type=str, default='', nargs='?', help='TODO')
@@ -65,7 +70,7 @@ class Note(Model):
 
 
 models = ModelManager(Note)
-db = Database(models=models, path=DATA_PATH)
+db = Database(models=models, path=config['DATA_PATH'])
 db.load()
 db.migrate()
 
@@ -104,7 +109,7 @@ def write_note(note=''):
     temp_file = build_temp_file()
     with open(temp_file, 'w+') as file:
         file.write(note)
-    os.system(f'{EDITOR} {temp_file}')
+    os.system(f'{config["EDITOR"]} {temp_file}')
     with open(temp_file, 'r+') as file:
         note = file.read()
     os.system(f'rm {temp_file}')
