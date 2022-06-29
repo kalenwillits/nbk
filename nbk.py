@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import argparse
 import IPython
@@ -10,13 +10,12 @@ from pandas_db.utils import is_numeric
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
-# TODO - migrate page number at some point
-# TODO - Add reletive dates -r --recent
 # TODO - breakup -s to -cp --copy and -s --subsitute
 # TODO - Add -e --execute to execute note as a bash script. This will allow workflow automations
 EDITOR = 'vim'
 # DATA_PATH = os.path.join('home', os.getlogin(), 'nbk', 'data')
 DATA_PATH = 'data/'
+TODAY = datetime.now()
 
 parser = argparse.ArgumentParser(description='TODO - Write description')
 
@@ -26,6 +25,7 @@ parser.add_argument('-c', '--create', action='store_true', default=False, help='
 parser.add_argument('-u', '--update', action='store_true', default=False, help='TODO')
 parser.add_argument('-d', '--drop', action='store_true', default=False, help='TODO')
 parser.add_argument('-s', '--snippet', help='TODO')
+parser.add_argument('-r', '--relative', action='store_true', default=False, help='TODO')
 parser.add_argument('--shell', action='store_true', default=False, help='TODO')
 
 args = parser.parse_args()
@@ -85,10 +85,12 @@ def output(df):
 
 def handle_snippet(query: str, format_value: str):
     query_df = handle_query(query)
-    format_value_list = format_value.split('&')
+    format_value_list = format_value.split(';')
     assert query_df.shape[0] == 1, f'Unable to get snippet, query produced {query_df.shape[0]} results'
     if format_value is not None:
-        formatted_note = query_df.iloc[0].note.format(*format_value_list)
+        assert len(snippit := query_df.iloc[0].note.split('```')) > 1, 'This note does not have a valid snippit.'
+        snippit = snippit[1]
+        formatted_note = snippit.format(*format_value_list)
         formatted_note_with_no_title = formatted_note.split('\n', 1)[1]
         copy(formatted_note_with_no_title)
     else:
@@ -122,6 +124,7 @@ def handle_query(query: str):
                 field_func_split = field_value[0].split('__')
                 value = field_value[1]
                 assert (field := Note._get_field(field_func_split[0])), 'Invalid partial lookup {kwarg[0]}'
+
                 if len(field_func_split) > 1:
                     field += '__' + field_func_split[1]
 
@@ -163,6 +166,10 @@ def handle_drop(query: str):
         db.save()
 
 
+def handle_default_view():
+    output(db.query('Note', timestamp__gt=(TODAY - timedelta(days=1)).timestamp()))
+
+
 def handle_shell():
     IPython.embed()
 
@@ -178,8 +185,10 @@ def main():
         handle_update(args.query)
     elif args.drop:
         handle_drop(args.query)
-    else:
+    elif args.query:
         output(handle_query(args.query))
+    else:
+        handle_default_view()
 
 
 if __name__ == '__main__':
