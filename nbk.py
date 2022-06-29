@@ -10,7 +10,6 @@ from pandas_db.utils import is_numeric
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
-# TODO - Reset title on update
 # TODO - migrate page number at some point
 # TODO - Add reletive dates -r --recent
 # TODO - breakup -s to -cp --copy and -s --subsitute
@@ -107,6 +106,12 @@ def write_note(note=''):
     return note
 
 
+def renumber_pages():
+    db.Note.reset_index(inplace=True)
+    db.Note.page = db.Note.index
+    db.Note.page = db.Note.page.apply(lambda page: page + 1)
+
+
 def handle_query(query: str):
     query = query.replace('&', '?')
     kwargs = {}
@@ -134,6 +139,7 @@ def handle_create():
     page = db.query('Note').shape[0] + 1
     timestamp = datetime.now().timestamp()
     df = db.create('Note', note=new_note, timestamp=timestamp, page=page)._to_df()
+    renumber_pages()
     db.save()
     return df
 
@@ -143,6 +149,7 @@ def handle_update(query: str):
     assert query_df.shape[0] == 1, f'Unable to update, query produced {query_df.shape[0]} results'
     updated_note = write_note(note=query_df.iloc[0].note)
     df = db.update('Note', query_df, note=updated_note, timestamp=datetime.now().timestamp())
+    renumber_pages()
     db.save()
     return df
 
@@ -152,6 +159,7 @@ def handle_drop(query: str):
     confirm = input(f'This action will delete {df.shape[0]} notes, are you sure? [y/n] ').lower()
     if confirm == 'y' or confirm == 'yes':
         db.drop('Note', df)
+        renumber_pages()
         db.save()
 
 
