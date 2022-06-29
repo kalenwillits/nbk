@@ -31,13 +31,33 @@ TODAY = datetime.now()
 parser = argparse.ArgumentParser(description='Simple terminal notes organizer and utility system.')
 
 #  nargs='?': Allows the positional argument to be optional.
-parser.add_argument('query', type=str, default='', nargs='?', help='TODO')
-parser.add_argument('-c', '--create', action='store_true', default=False, help='TODO')
-parser.add_argument('-u', '--update', action='store_true', default=False, help='TODO')
-parser.add_argument('-d', '--drop', action='store_true', default=False, help='TODO')
-parser.add_argument('-s', '--snippet', help='TODO')
-parser.add_argument('-e', '--execute', help='TODO')
-parser.add_argument('--shell', action='store_true', default=False, help='TODO')
+parser.add_argument('query', type=str, default='', nargs='?', help='''
+Syntax: ?<fieldName>__<optional__function>=<value>
+Main query string. Fields: [note, timestamp, page, title, year, month, day, weekday, hour]
+Common optional functions: [f, gt, lt, gte, lte]
+values can be numerical or strings, however only numerical values are supported in greater than and less than lookups.
+Multiple lookups are supported and can be seperated by <?> or <&>.
+example: ?title__f=test&month__gte=8
+The default view will only show notes from today.
+    ''')
+parser.add_argument('-c', '--create', action='store_true', default=False, help='Create: This will open the editor.')
+parser.add_argument('-u', '--update', action='store_true', default=False, help='''
+Update: Executes the query and if the result is a single note, open it in the editor.
+    ''')
+parser.add_argument('-d', '--drop', action='store_true', default=False, help='''
+Drop: Executes the query, asks for confirmation, then removes all queried pages.
+    ''')
+parser.add_argument('-s', '--snippet', help='''
+Snippit: Executes the query and looks for a single note with a code snippit containig code wrapped in <```>.
+Then takes arguments seperated by <;>. Those arguments are formatted into the snippet at curly braces with an index.
+<{i}> The formatted code is then copied to the clipboard.
+    ''')
+parser.add_argument('-e', '--execute', help='''
+Execute: same as snippit but will execute the code as a bash script instead of copying it to the clipboard.
+    ''')
+parser.add_argument('--shell', action='store_true', default=False, help='''
+Shell: Open an iPython shell where the database can be accessed through the global variable <db>.
+    ''')
 
 args = parser.parse_args()
 
