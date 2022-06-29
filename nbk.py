@@ -16,7 +16,8 @@ import tabulate   # imported only to be included when compiled.
 # TODO - breakup -s to -cp --copy and -s --subsitute
 # TODO - Add -e --execute to execute note as a bash script. This will allow workflow automations
 EDITOR = 'vim'
-DATA_PATH = os.path.join('home', os.getlogin(), 'nbk', 'data')
+# DATA_PATH = os.path.join('home', os.getlogin(), 'nbk', 'data')
+DATA_PATH = 'data/'
 
 parser = argparse.ArgumentParser(description='TODO - Write description')
 
@@ -35,6 +36,10 @@ class Note(Model):
     note: str
     timestamp: float
     page: int
+
+    @classmethod
+    def _get_field(cls, field_partial: str) -> str:
+        return next(filter(lambda field_name: field_partial in field_name, cls()._schema.fields()), None)
 
     @property
     def title(self) -> str:
@@ -108,11 +113,18 @@ def handle_query(query: str):
     if '?' in query:
         for kwarg in query.split('?'):
             if kwarg:
-                assert len(kwarg := kwarg.split('=')) == 2, f'Invalid pattern [{kwarg}]'
-                if is_numeric(kwarg[1]):
-                    kwargs[kwarg[0]] = float(kwarg[1])
+                assert len(field_value := kwarg.split('=')) == 2, f'Invalid pattern [{kwarg}]'
+                field_func_split = field_value[0].split('__')
+                value = field_value[1]
+                assert (field := Note._get_field(field_func_split[0])), 'Invalid partial lookup {kwarg[0]}'
+                if len(field_func_split) > 1:
+                    field += '__' + field_func_split[1]
+
+                if is_numeric(value):
+                    kwargs[field] = float(value)
                 else:
-                    kwargs[kwarg[0]] = kwarg[1]
+                    kwargs[field] = value
+
     df = db.query('Note', **kwargs)
     return df
 
