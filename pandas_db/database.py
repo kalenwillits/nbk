@@ -54,7 +54,7 @@ class Database:
         df = instance._to_df()
 
         if self.has(model_name):
-            self[model_name] = self[model_name].append(df, ignore_index=True)
+            self[model_name] = pd.concat([self[model_name], df], ignore_index=True)
         else:
             self[model_name] = df
         return instance

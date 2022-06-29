@@ -10,7 +10,6 @@ from pandas_db.utils import is_numeric
 from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
-# TODO - breakup -s to -cp --copy and -s --subsitute
 # TODO - Add -e --execute to execute note as a bash script. This will allow workflow automations
 EDITOR = 'vim'
 # DATA_PATH = os.path.join('home', os.getlogin(), 'nbk', 'data')
@@ -25,7 +24,7 @@ parser.add_argument('-c', '--create', action='store_true', default=False, help='
 parser.add_argument('-u', '--update', action='store_true', default=False, help='TODO')
 parser.add_argument('-d', '--drop', action='store_true', default=False, help='TODO')
 parser.add_argument('-s', '--snippet', help='TODO')
-parser.add_argument('-r', '--relative', action='store_true', default=False, help='TODO')
+parser.add_argument('-e', '--execute', help='TODO')
 parser.add_argument('--shell', action='store_true', default=False, help='TODO')
 
 args = parser.parse_args()
@@ -83,18 +82,22 @@ def output(df):
         print(df.note.iloc[0])
 
 
-def handle_snippet(query: str, format_value: str):
+def get_snippit(query: str, format_value: str) -> str:
     query_df = handle_query(query)
     format_value_list = format_value.split(';')
     assert query_df.shape[0] == 1, f'Unable to get snippet, query produced {query_df.shape[0]} results'
     if format_value is not None:
         assert len(snippit := query_df.iloc[0].note.split('```')) > 1, 'This note does not have a valid snippit.'
         snippit = snippit[1]
-        formatted_note = snippit.format(*format_value_list)
-        formatted_note_with_no_title = formatted_note.split('\n', 1)[1]
-        copy(formatted_note_with_no_title)
-    else:
-        copy(query.iloc[0].note.split('\n', 1))
+        return snippit.format(*format_value_list)
+
+
+def handle_snippet(query: str, format_value: str):
+    copy(get_snippit(query, format_value))
+
+
+def handle_execute(query: str, format_value: str):
+    os.system(get_snippit(query, format_value))
 
 
 def write_note(note=''):
@@ -179,6 +182,8 @@ def main():
         handle_shell()
     elif args.snippet:
         handle_snippet(args.query, args.snippet)
+    elif args.execute:
+        handle_execute(args.query, args.execute)
     elif args.create:
         handle_create()
     elif args.update:
