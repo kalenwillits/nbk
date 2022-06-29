@@ -159,13 +159,17 @@ def handle_query(query: str):
                 assert len(field_value := kwarg.split('=')) == 2, f'Invalid pattern [{kwarg}]'
                 field_func_split = field_value[0].split('__')
                 value = field_value[1]
-                assert (field := Note._get_field(field_func_split[0])), 'Invalid partial lookup {kwarg[0]}'
+                if not (field := Note._get_field(field_func_split[0])):
+                    field = field_func_split[0]
 
                 if len(field_func_split) > 1:
                     field += '__' + field_func_split[1]
 
                 if is_numeric(value):
-                    kwargs[field] = float(value)
+                    if int(value) == value:
+                        kwargs[field] = int(value)
+                    else:
+                        kwargs[field] = float(value)
                 else:
                     kwargs[field] = value
 
