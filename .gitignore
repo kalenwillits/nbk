@@ -141,3 +141,6 @@ dist/
 
 # venv
 .nbk
+
+# nbk config file
+config.json
