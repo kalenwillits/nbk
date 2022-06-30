@@ -107,10 +107,10 @@ You will be prompted if you really want to continue your action before the delet
 Snippets are parts of a note that can contain variables which can be replaced and copied to the clipboard. A note with
 a format string will look like this:
 ```
-```
+`````
 	My name is {0}
 	I am a {1}
-```
+`````
 ```
 
 Everything within the tildes will be the part of the note that is copied and formatted. You can pass the arguments in 
