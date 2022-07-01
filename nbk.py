@@ -65,6 +65,11 @@ parser.add_argument('--shell', action='store_true', default=False, help='''
 Shell: Open an iPython shell where the database can be accessed through the global variable <db>.
     ''')
 
+parser.add_argument('-o', '--output', type=str, help='''
+Output: Output file location for csv export of query.
+    ''')
+
+
 args = parser.parse_args()
 
 
@@ -171,7 +176,7 @@ def handle_query(query: str):
                     field += '__' + field_func_split[1]
 
                 if is_numeric(value):
-                    if int(value) == value:
+                    if float(value) % 1 == 0:
                         kwargs[field] = int(value)
                     else:
                         kwargs[field] = float(value)
@@ -196,7 +201,8 @@ def handle_update(query: str):
     query_df = handle_query(query)
     assert query_df.shape[0] == 1, f'Unable to update, query produced {query_df.shape[0]} results'
     updated_note = write_note(note=query_df.iloc[0].note)
-    df = db.update('Note', query_df, note=updated_note, timestamp=datetime.now().timestamp())
+    updated_title = next(iter(updated_note.split('\n')), 'Untitled')
+    df = db.update('Note', query_df, note=updated_note, title=updated_title, timestamp=datetime.now().timestamp())
     renumber_pages()
     db.save()
     return df
@@ -209,6 +215,10 @@ def handle_drop(query: str):
         db.drop('Note', df)
         renumber_pages()
         db.save()
+
+def handle_output(query: str, output: str):
+    df = handle_query(query)
+    df.to_csv(output, index=False)
 
 
 def handle_default_view():
@@ -226,6 +236,8 @@ def handle_all():
 def main():
     if args.shell:
         handle_shell()
+    elif args.output:
+        handle_output(args.query, args.output)
     elif args.snippet:
         handle_snippet(args.query, args.snippet)
     elif args.execute:
