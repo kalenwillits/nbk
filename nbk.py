@@ -12,26 +12,30 @@ from pyperclip import copy
 import tabulate   # imported only to be included when compiled.
 
 USER = os.getlogin()
-CONFIG_FILE = f'/home/{USER}/nbk/config.json'
+CONFIG_DIR = f'/home/{USER}/nbk/'
+CONFIG_FILE = f'{CONFIG_DIR}config.json'
 DEFAULT_CONFIG = {'EDITOR': 'vim'}
 
 global config
 
+
+if not os.path.exists(CONFIG_DIR):
+    os.mkdir(CONFIG_DIR)
+
 if not os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'w') as json_config_file:
+    with open(CONFIG_FILE, 'w+') as json_config_file:
         json_config_file.write(json.dumps(DEFAULT_CONFIG))
 
 with open(CONFIG_FILE) as json_config_file:
     config = json.loads(json_config_file.read())
 
 if config.get('DATA_PATH') is None:
-    config['DATA_PATH'] = f'/home/{USER}/nbk/data/'
+    config['DATA_PATH'] = CONFIG_DIR
 
 TODAY = datetime.now()
 
 parser = argparse.ArgumentParser(description='Simple terminal notes organizer and utility system.')
 
-#  nargs='?': Allows the positional argument to be optional.
 parser.add_argument('query', type=str, default='', nargs='?', help='''
 Syntax: ?<fieldName>__<optional__function>=<value>
 Main query string. Fields: [note, timestamp, page, title, year, month, day, weekday, hour]
@@ -57,6 +61,9 @@ parser.add_argument('-s', '--snippet', help='''
 Snippit: Executes the query and looks for a single note with a code snippet containig code wrapped in <```>.
 Then takes arguments seperated by <;>. Those arguments are formatted into the snippet at curly braces with an index.
 <{i}> The formatted code is then copied to the clipboard.
+    ''')
+parser.add_argument('-p', '--page', type=int, help='''
+Page: Shortcut to execute the query [?page=n] where `n` is the page number.
     ''')
 parser.add_argument('-e', '--execute', help='''
 Execute: same as snippet but will execute the code as a bash script instead of copying it to the clipboard.
@@ -150,7 +157,7 @@ def write_note(note=''):
     os.system(f'{config["EDITOR"]} {temp_file}')
     with open(temp_file, 'r+') as file:
         note = file.read()
-    os.system(f'rm {temp_file}')
+    os.system(f'rm .nbk-*.md')
     return note
 
 
@@ -216,6 +223,7 @@ def handle_drop(query: str):
         renumber_pages()
         db.save()
 
+
 def handle_output(query: str, output: str):
     df = handle_query(query)
     df.to_csv(output, index=False)
@@ -231,6 +239,10 @@ def handle_shell():
 
 def handle_all():
     output(db.Note)
+
+
+def handle_page(page):
+    output(db.query('Note', page=page))
 
 
 def main():
@@ -250,6 +262,8 @@ def main():
         handle_update(args.query)
     elif args.drop:
         handle_drop(args.query)
+    elif args.page:
+        handle_page(args.page)
     elif args.query:
         output(handle_query(args.query))
     else:
